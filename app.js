@@ -56,7 +56,73 @@ function customHttp() {
 // Init http module
 const http = customHttp();
 
+//Сервис который отвечает за взаимодействие с нашим API
+const newsService = (function () {
+  const apiKey = '31bc160f3f9946a9907abcc2c43e13f3';
+  const apiUrl = 'https://newsapi.org/v2';
+
+  return {
+    topHeadlines(country = 'ua', cb) {
+      http.get(`${apiUrl}/top-headlines?country=${country}&category=technology&apiKey=${apiKey}`, cb);
+    },
+    everything(query, cb) {
+      http.get(`${apiUrl}/everything?q=${query}&apiKey=${apiKey}`, cb);
+    }
+  };
+
+})();
+
 //  init selects
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   M.AutoInit();
+  loadNews();
 });
+
+//Load news function
+function loadNews() {
+  newsService.topHeadlines('ua', onGetResponse);
+}
+
+// Function on get response from server
+function onGetResponse(err, res) {
+  console.log(res);
+  renderNews(res.articles);
+}
+
+// Function render new
+function renderNews(news) {
+  const newsContainer = document.querySelector('.news-container .row');
+  let fragment = '';
+
+  news.forEach(newsItem => {
+    const el = newsTemplate(newsItem);
+    fragment += el;
+  });
+
+  newsContainer.insertAdjacentHTML('afterbegin', fragment);
+}
+
+// News item template function
+function newsTemplate({
+  urlToImage,
+  title,
+  url,
+  description
+}) {
+  return `
+    <div class="col s12">
+      <div class="card">
+        <div class="card-image">
+          <img src="${urlToImage}">
+          <span class="card-title">${title || ''}</span>
+        </div>
+        <div class="card-content">
+          <p>${description || ''}</p>
+        </div>
+        <div class="card-action">
+          <a href="${url}">Read more</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
